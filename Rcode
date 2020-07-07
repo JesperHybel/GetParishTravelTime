@@ -1,0 +1,44 @@
+
+
+
+rm(list=ls())
+require("httr")
+require("osrm")
+# Get a list of all sogne
+  params <- list()
+  get_data <- httr::GET(
+    url = "https://dawa.aws.dk/sogne",
+    query = params
+)
+
+x.temp <- httr::content(get_data)
+y.temp <- lapply(x.temp,function(x) {return(x$navn)})
+data <- data.frame(name=unlist(y.temp))
+
+y.temp<-lapply(x.temp,function(x) {return(x$kode)})
+data$sognekode<-as.numeric(unlist(y.temp))
+
+y.temp<-lapply(x.temp,function(x) {return(x$visueltcenter)})
+z.temp<-matrix(unlist(y.temp),ncol=2,byrow=TRUE)
+
+data$lon <- z.temp[,1]
+data$lat <- z.temp[,2]
+
+y.temp <- lapply(x.temp,function(x) {return(x$bbox)})
+z.temp <- matrix(unlist(y.temp),ncol=4,byrow=TRUE)
+
+data$b1 <- z.temp[,1]
+data$b2 <- z.temp[,2]
+data$b3 <- z.temp[,3]
+data$b4 <- z.temp[,4]
+head(data)
+
+distCom <- osrmTable(loc = data[1:10, c("name","lon","lat")])
+# First 5 rows and columns
+distCom$duration[1:10,1:10]
+
+
+# Get distance,travel time and route/trip between two points
+goo_1 <- osrmRoute(src=data[1,c("lon","lat")],dst=data[2,c("lon","lat")],returnclass="sf")
+goo_2 <- osrmRoute(src=data[1,c("lon","lat")],dst=data[3,c("lon","lat")],returnclass="sf")
+
